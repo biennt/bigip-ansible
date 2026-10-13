@@ -1,0 +1,70 @@
+---
+- name: GRAB F5 FACTS
+  hosts: bigip
+  connection: local
+  gather_facts: no
+  vars_files:
+    - vars_encrypted.yml
+
+  tasks:
+
+  - bigip_virtual_server:
+      provider:
+        server: "{{ansible_host}}"
+        user: "{{ansible_user}}"
+        password: "{{bigip_pass}}"
+        server_port: 8443
+        validate_certs: no
+      name: "vs_http"
+      state: absent
+
+  - bigip_pool:
+      provider:
+        server: "{{ansible_host}}"
+        user: "{{ansible_user}}"
+        password: "{{bigip_pass}}"
+        server_port: 8443
+        validate_certs: no
+      name: "http_pool"
+      state: absent
+
+  - bigip_node:
+      provider:
+        server: "{{ansible_host}}"
+        user: "{{ansible_user}}"
+        password: "{{bigip_pass}}"
+        server_port: 8443
+        validate_certs: no
+      host: "{{item}}"
+      name: "{{item}}"
+      state: absent
+    loop: "{{ query('inventory_hostnames', 'webservers') }}"
+
+  - bigip_policy:
+      provider:
+        server: "{{ansible_host}}"
+        user: "{{ansible_user}}"
+        password: "{{bigip_pass}}"
+        server_port: 8443
+        validate_certs: no
+      name: "enforcement_policy"
+      state: absent
+
+  - bigip_asm_policy_manage:
+      provider:
+        server: "{{ansible_host}}"
+        user: "{{ansible_user}}"
+        password: "{{bigip_pass}}"
+        server_port: 8443
+        validate_certs: no
+      name: "waf_policy"
+      state: absent
+
+  - bigip_config:
+      provider:
+        server: "{{ansible_host}}"
+        user: "{{ansible_user}}"
+        password: "{{bigip_pass}}"
+        server_port: 8443
+        validate_certs: no
+      save: yes
