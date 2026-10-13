@@ -8,6 +8,13 @@ pip install bigsuds
 pip install ansible
 ```
 Edit the inventory file.
+```
+[lb]
+bigip ansible_host=10.0.1.152 ansible_user=devops
+
+[webservers]
+10.0.1.[5:10]
+```
 
 Create the Ansible Vault password file: vars_encrypted.yml (clear text, storing the big-ip password)
 
