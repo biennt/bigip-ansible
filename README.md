@@ -26,7 +26,7 @@ Encrypt the file:
 ansible-vault encrypt vars_encrypted.yml
 ```
 
-Run the playbook, to test the settings
+Run the playbook, to test the settings (before doing anything else)
 ```
 ubuntu@ip-10-0-1-23:~$ ansible-playbook -i ansible_inventory --ask-vault-pass bigip-facts.yml
 Vault password:
