@@ -1,0 +1,61 @@
+---
+- name: GRAB F5 FACTS
+  hosts: lb
+  connection: local
+  gather_facts: no
+  vars_files:
+    - vars_encrypted.yml
+
+  tasks:
+
+  - bigip_asm_policy_manage:
+      provider:
+        server: "{{ansible_host}}"
+        user: "{{ansible_user}}"
+        password: "{{bigip_pass}}"
+        server_port: 8443
+        validate_certs: no
+      name: "waf_policy"
+      template: "Rapid Deployment Policy"
+      state: present
+      active: true
+      apply: true
+
+  - bigip_policy:
+      provider:
+        server: "{{ansible_host}}"
+        user: "{{ansible_user}}"
+        password: "{{bigip_pass}}"
+        server_port: 8443
+        validate_certs: no
+      name: "enforcement_policy"
+      strategy: "first"
+      state: present
+
+  - bigip_policy_rule:
+      provider:
+        server: "{{ansible_host}}"
+        user: "{{ansible_user}}"
+        password: "{{bigip_pass}}"
+        server_port: 8443
+        validate_certs: no
+      policy:  "enforcement_policy"
+      name: "asm_rule"
+      actions:
+        - type: enable
+          asm_policy: "waf_policy"
+      state: present
+
+  - bigip_virtual_server:
+      provider:
+        server: "{{ansible_host}}"
+        user: "{{ansible_user}}"
+        password: "{{bigip_pass}}"
+        server_port: 8443
+        validate_certs: no
+      name: "vs_http"
+      all_profiles: ['http', 'oneconnect', 'websecurity']
+      policies:
+        - enforcement_policy
+      security_log_profiles:
+        - "Log illegal requests"
