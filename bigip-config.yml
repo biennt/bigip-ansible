@@ -1,0 +1,70 @@
+---
+- name: GRAB F5 FACTS
+  hosts: lb
+  connection: local
+  gather_facts: no
+  vars_files:
+    - vars_encrypted.yml
+
+  tasks:
+
+  - bigip_node:
+      provider:
+        server: "{{ansible_host}}"
+        user: "{{ansible_user}}"
+        password: "{{bigip_pass}}"
+        server_port: 8443
+        validate_certs: no
+      host: "{{item}}"
+      name: "{{item}}"
+      monitors:
+        - /Common/icmp
+    loop: "{{ query('inventory_hostnames', 'webservers') }}"
+
+  - bigip_pool:
+      provider:
+        server: "{{ansible_host}}"
+        user: "{{ansible_user}}"
+        password: "{{bigip_pass}}"
+        server_port: 8443
+        validate_certs: no
+      name: "http_pool"
+      lb_method: "round-robin"
+      monitors: "/Common/http"
+
+  - bigip_pool_member:
+      provider:
+        server: "{{ansible_host}}"
+        user: "{{ansible_user}}"
+        password: "{{bigip_pass}}"
+        server_port: 8443
+        validate_certs: no
+      state: "present"
+      pool: "http_pool"
+      port: 80
+      host: "{{item}}"
+    loop: "{{ query('inventory_hostnames', 'webservers') }}"
+
+  - bigip_virtual_server:
+      provider:
+        server: "{{ansible_host}}"
+        user: "{{ansible_user}}"
+        password: "{{bigip_pass}}"
+        server_port: 8443
+        validate_certs: no
+      name: "vs_http"
+      destination: "10.0.1.152"
+      port: "80"
+      enabled_vlans: "all"
+      all_profiles: ['http', 'oneconnect']
+      pool: "http_pool"
+      snat: "Automap"
+
+  - bigip_config:
+      provider:
+        server: "{{ansible_host}}"
+        user: "{{ansible_user}}"
+        password: "{{bigip_pass}}"
+        server_port: 8443
+        validate_certs: no
+      save: yes
